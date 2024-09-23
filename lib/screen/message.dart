@@ -1,7 +1,11 @@
+// import 'dart:io';
+//
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
 // import 'package:flutter/material.dart';
 // import 'package:flutter/foundation.dart' as foundation;
+// import 'package:image_picker/image_picker.dart';
 //
 // import '../class/neum.dart';
 //
@@ -28,6 +32,8 @@
 //
 //   final TextEditingController _controller = TextEditingController();
 //   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+//   final FirebaseStorage _storage = FirebaseStorage.instance;
+//   final ImagePicker _picker = ImagePicker(); // Image picker instance
 //   final ScrollController _scrollController = ScrollController();
 //   final FocusNode _textFieldFocusNode = FocusNode();
 //   bool _emojiShowing = false;
@@ -84,18 +90,53 @@
 //     }
 //   }
 //
-//   Future<void> _sendMessage() async {
-//     if (_controller.text.isNotEmpty) {
+//   void _sendMessage({String? imageUrl, String? videoUrl}) async {
+//     if (_controller.text.isNotEmpty || imageUrl != null || videoUrl != null) {
 //       await _firestore.collection('messages').add({
 //         'sender': widget.currentUsername,
 //         'receiver': widget.selectedUsername,
-//         'message': _controller.text,
+//         'message': _controller.text.isNotEmpty ? _controller.text : null,
+//         'imageUrl': imageUrl, // Add image URL if present
+//         'videoUrl': videoUrl, // Add video URL if present
 //         'timestamp': FieldValue.serverTimestamp(),
 //       });
-//
 //       _controller.clear();
 //       _scrollToBottom();
 //     }
+//   }
+//   // Function to pick image or video from gallery
+//   Future<void> _pickMedia() async {
+//     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery) ??
+//         await _picker.pickVideo(source: ImageSource.gallery);
+//
+//     if (pickedFile != null) {
+//       File file = File(pickedFile.path);
+//       String fileType = pickedFile.mimeType!.startsWith('image') ? 'image' : 'video';
+//
+//       // Upload to Firebase Storage
+//       String downloadUrl = await _uploadFile(file, fileType);
+//
+//       // Send the message with the uploaded media
+//       if (fileType == 'image') {
+//         _sendMessage(imageUrl: downloadUrl);
+//       } else if (fileType == 'video') {
+//         _sendMessage(videoUrl: downloadUrl);
+//       }
+//     }
+//   }
+//
+//   // Function to upload the file to Firebase Storage
+//   Future<String> _uploadFile(File file, String fileType) async {
+//     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+//     Reference storageRef = _storage
+//         .ref()
+//         .child('chat_media')
+//         .child(fileType)
+//         .child('$fileName.${fileType == 'image' ? 'jpg' : 'mp4'}');
+//
+//     UploadTask uploadTask = storageRef.putFile(file);
+//     TaskSnapshot snapshot = await uploadTask;
+//     return await snapshot.ref.getDownloadURL();
 //   }
 //
 //   void _scrollToBottom() {
@@ -426,7 +467,7 @@
 //                                 children: [
 //                                   IconButton(
 //                                     icon: const Icon(Icons.camera_alt),
-//                                     onPressed: () {},
+//                                     onPressed: _pickMedia,
 //                                   ),
 //                                   IconButton(
 //                                     icon: const Icon(Icons.emoji_emotions),
