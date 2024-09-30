@@ -1,12 +1,13 @@
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
+// import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+// import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:flutter/foundation.dart' as foundation;
 // import 'dart:io';
 //
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter/foundation.dart' as foundation;
-// import 'package:image_picker/image_picker.dart';
-//
+// import '../class/fullscrn.dart';
 // import '../class/neum.dart';
 //
 // class Message extends StatefulWidget {
@@ -24,31 +25,20 @@
 // }
 //
 // class _MessageState extends State<Message> {
+//
 //   final List<Map<String, dynamic>> menuItems = [
 //     {'value': 'Clear Chat', 'icon': Icons.clear_all, 'text': 'Clear'},
 //     {'value': 'Block', 'icon': Icons.block, 'text': 'Black'},
 //     {'value': 'Favorite', 'icon': Icons.favorite, 'text': 'Favorite'},
 //   ];
 //
-//   final TextEditingController _controller = TextEditingController();
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-//   final FirebaseStorage _storage = FirebaseStorage.instance;
-//   final ImagePicker _picker = ImagePicker(); // Image picker instance
-//   final ScrollController _scrollController = ScrollController();
-//   final FocusNode _textFieldFocusNode = FocusNode();
 //   bool _emojiShowing = false;
 //
-//   @override
-//   void initState() {
-//     super.initState();
-//     _textFieldFocusNode.addListener(() {
-//       if (_textFieldFocusNode.hasFocus && _emojiShowing) {
-//         setState(() {
-//           _emojiShowing = false; // Hide emoji picker when TextField gains focus
-//         });
-//       }
-//     });
-//   }
+//   final TextEditingController _controller = TextEditingController();
+//   final FocusNode _textFieldFocusNode = FocusNode();
+//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+//   final FirebaseStorage _storage = FirebaseStorage.instance;
+//   final ScrollController _scrollController = ScrollController(); // Scroll controller
 //
 //   @override
 //   void dispose() {
@@ -57,6 +47,117 @@
 //     _textFieldFocusNode.dispose();
 //     super.dispose();
 //   }
+//
+//   File? _imageFile; // Holds the selected image
+//   final ImagePicker _picker = ImagePicker(); // For picking images
+//   String? _downloadUrl; // To store the uploaded image's URL
+//   final FirebaseAuth _auth = FirebaseAuth.instance; // Firebase Authentication instance
+//   User? currentUser; // Holds the current logged-in user
+//   String? currentUsername; // Stores the current user's username
+//
+//   // Function to check if the user is authenticated
+//   Future<void> _checkAuthStatus() async {
+//     currentUser = _auth.currentUser;
+//     if (currentUser != null) {
+//       await fetchUsername();
+//     } else {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text("User not authorized. Please log in.")),
+//       );
+//     }
+//   }
+//
+//   // Fetch the username from Firestore
+//   Future<void> fetchUsername() async {
+//     if (currentUser != null) {
+//       DocumentSnapshot userDoc = await _firestore
+//           .collection('users')
+//           .doc(currentUser!.uid)
+//           .get();
+//       if (userDoc.exists) {
+//         setState(() {
+//           currentUsername = userDoc['username'];
+//         });
+//       } else {
+//         print("User document does not exist");
+//       }
+//     }
+//   }
+//
+//   // Pick an image from the gallery
+//   Future<void> _pickImage() async {
+//     if (currentUser == null) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text("User not authorized. Please log in.")),
+//       );
+//       return; // Exit if user is not authenticated
+//     }
+//
+//     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+//     if (pickedFile != null) {
+//       setState(() {
+//         _imageFile = File(pickedFile.path); // Set the selected image
+//       });
+//       await _uploadAndSendImage(pickedFile); // Upload the image and send its URL as a message
+//     } else {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text("No image selected.")),
+//       );
+//     }
+//   }
+//
+//   // Upload the selected image and send its URL as part of the message
+//   Future<void> _uploadAndSendImage(XFile pickedFile) async {
+//     if (pickedFile == null) return; // Check if the file is null
+//
+//     try {
+//       // Generate a unique file name using the user's UID and current timestamp
+//       String fileName = 'images/${currentUser!.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+//
+//       // Create a file object from the picked image
+//       File file = File(pickedFile.path);
+//
+//       // Upload the image to Firebase Storage
+//       UploadTask uploadTask = _storage.ref(fileName).putFile(file);
+//       TaskSnapshot snapshot = await uploadTask;
+//
+//       // Check if the upload was successful
+//       if (snapshot.state == TaskState.success) {
+//         // Retrieve the download URL of the uploaded image
+//         String downloadUrl = await snapshot.ref.getDownloadURL();
+//         print("Image uploaded successfully! URL: $downloadUrl");
+//
+//         // Send the image URL as a message (implement _sendMessage)
+//         _sendMessage(imageUrl: downloadUrl);
+//
+//         setState(()
+//         {
+//           _downloadUrl = downloadUrl; // Update the download URL in the UI
+//           _imageFile = null; // Clear selected image after upload
+//         }
+//         );
+//         showFullScreenImage(downloadUrl); // Show the image in fullscreen
+//       } else {
+//         throw Exception("Image upload failed.");
+//       }
+//     } catch (e) {
+//       print("Error uploading image: $e");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Error uploading image: $e")),
+//       );
+//     }
+//   }
+//
+//   void showFullScreenImage(String imageUrl) {
+//     Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => FullScreenImageScreen(imageUrl: imageUrl),
+//       ),
+//     );
+//   }
+//
+//
 //
 //   Future<void> _clearChat() async {
 //     try {
@@ -90,72 +191,6 @@
 //     }
 //   }
 //
-//   void _sendMessage({String? imageUrl, String? videoUrl}) async {
-//     if (_controller.text.isNotEmpty || imageUrl != null || videoUrl != null) {
-//       await _firestore.collection('messages').add({
-//         'sender': widget.currentUsername,
-//         'receiver': widget.selectedUsername,
-//         'message': _controller.text.isNotEmpty ? _controller.text : null,
-//         'imageUrl': imageUrl, // Add image URL if present
-//         'videoUrl': videoUrl, // Add video URL if present
-//         'timestamp': FieldValue.serverTimestamp(),
-//       });
-//       _controller.clear();
-//       _scrollToBottom();
-//     }
-//   }
-//   // Function to pick image or video from gallery
-//   Future<void> _pickMedia() async {
-//     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery) ??
-//         await _picker.pickVideo(source: ImageSource.gallery);
-//
-//     if (pickedFile != null) {
-//       File file = File(pickedFile.path);
-//       String fileType = pickedFile.mimeType!.startsWith('image') ? 'image' : 'video';
-//
-//       // Upload to Firebase Storage
-//       String downloadUrl = await _uploadFile(file, fileType);
-//
-//       // Send the message with the uploaded media
-//       if (fileType == 'image') {
-//         _sendMessage(imageUrl: downloadUrl);
-//       } else if (fileType == 'video') {
-//         _sendMessage(videoUrl: downloadUrl);
-//       }
-//     }
-//   }
-//
-//   // Function to upload the file to Firebase Storage
-//   Future<String> _uploadFile(File file, String fileType) async {
-//     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-//     Reference storageRef = _storage
-//         .ref()
-//         .child('chat_media')
-//         .child(fileType)
-//         .child('$fileName.${fileType == 'image' ? 'jpg' : 'mp4'}');
-//
-//     UploadTask uploadTask = storageRef.putFile(file);
-//     TaskSnapshot snapshot = await uploadTask;
-//     return await snapshot.ref.getDownloadURL();
-//   }
-//
-//   void _scrollToBottom() {
-//     if (_scrollController.hasClients) {
-//       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-//     }
-//   }
-//
-//   void _toggleEmojiKeyboard() {
-//     setState(() {
-//       _emojiShowing = !_emojiShowing;
-//     });
-//
-//     if (_emojiShowing) {
-//       FocusScope.of(context).unfocus();
-//     } else {
-//       FocusScope.of(context).requestFocus(FocusNode());
-//     }
-//   }
 //
 //   Future<void> _deleteMessage(String messageId) async {
 //     try {
@@ -216,10 +251,59 @@
 //   }
 //
 //   @override
+//   void initState() {
+//     super.initState();
+//     _checkAuthStatus(); // Check authentication status on init
+//     _textFieldFocusNode.addListener(() {
+//       if (_textFieldFocusNode.hasFocus && _emojiShowing) {
+//         setState(() {
+//           _emojiShowing = false; // Hide emoji picker when TextField gains focus
+//         });
+//       }
+//     });
+//   }
+//   // Toggle the emoji keyboard visibility
+//   void _toggleEmojiKeyboard() {
+//     setState(() {
+//       _emojiShowing = !_emojiShowing;
+//     });
+//
+//     if (_emojiShowing) {
+//       FocusScope.of(context).unfocus();
+//     } else {
+//       FocusScope.of(context).requestFocus(FocusNode());
+//     }
+//   }
+//
+//   void _sendMessage({String? imageUrl}) async {
+//     if (_controller.text.isNotEmpty || imageUrl != null) {
+//       try {
+//         await _firestore.collection('messages').add({
+//           'sender': widget.currentUsername,
+//           'receiver': widget.selectedUsername,
+//           'message': _controller.text.isNotEmpty ? _controller.text : null,
+//           'imageUrl': imageUrl, // Store image URL if it exists
+//           'timestamp': FieldValue.serverTimestamp(),
+//         });
+//         _controller.clear();
+//         _scrollToBottom();
+//       } catch (e) {
+//         print("Error sending message: $e");
+//       }
+//     }
+//   }
+//   // Function to automatically scroll to the bottom
+//   void _scrollToBottom() {
+//     if (_scrollController.hasClients) {
+//       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+//     }
+//   }
+//
+//   @override
 //   Widget build(BuildContext context) {
 //     return SafeArea(
 //       child: Scaffold(
-//         backgroundColor: Color(0xFFE7ECEF),
+//         backgroundColor: const Color(0xFFE7ECEF),
 //         body: Stack(
 //           children: [
 //             Padding(
@@ -232,30 +316,31 @@
 //                       Navigator.pop(context);
 //                     },
 //                   ),
-//                   SizedBox(width: 20),
+//                   const SizedBox(width: 20),
 //                   Text(
 //                     widget.selectedUsername,
-//                     style: TextStyle(
+//                     style: const TextStyle(
 //                       color: Colors.black,
 //                       fontWeight: FontWeight.bold,
 //                       fontSize: 25,
 //                     ),
 //                   ),
-//                   Spacer(),
+//                   const Spacer(),
 //                   NeumorphicButton(
 //                     icon: Icons.call,
 //                     onPressed: () {
-//                       // Your onPressed logic here
+//                       // Call logic here
 //                     },
 //                   ),
-//                   SizedBox(width: 10),
+//                   const SizedBox(width: 10),
 //                   NeumorphicButton(
 //                     icon: Icons.video_call,
 //                     onPressed: () {
-//                       // Your onPressed logic here
+//                       // Video call logic here
 //                     },
 //                   ),
-//                   SizedBox(width: 10),
+//                   const SizedBox(width: 10),
+//
 //                   Theme(
 //                     data: Theme.of(context).copyWith(
 //                       popupMenuTheme: PopupMenuThemeData(
@@ -335,6 +420,8 @@
 //                 ],
 //               ),
 //             ),
+//
+//
 //             Align(
 //               alignment: Alignment.bottomCenter,
 //               child: Padding(
@@ -342,12 +429,12 @@
 //                 child: Container(
 //                   height: 580,
 //                   decoration: BoxDecoration(
-//                     borderRadius: BorderRadius.only(
+//                     borderRadius: const BorderRadius.only(
 //                       topLeft: Radius.circular(25),
 //                       topRight: Radius.circular(25),
 //                     ),
-//                     color: Color(0xFFE7ECEF),
-//                     boxShadow: [
+//                     color: const Color(0xFFE7ECEF),
+//                     boxShadow: const [
 //                       BoxShadow(
 //                         offset: Offset(-8, -8),
 //                         color: Colors.white,
@@ -377,7 +464,6 @@
 //                       final messages = snapshot.data!.docs.where((message) {
 //                         final sender = message['sender'];
 //                         final receiver = message['receiver'];
-//
 //                         return (sender == widget.currentUsername &&
 //                             receiver == widget.selectedUsername) ||
 //                             (sender == widget.selectedUsername &&
@@ -391,21 +477,23 @@
 //                           final message = messages[index];
 //                           final isCurrentUser =
 //                               message['sender'] == widget.currentUsername;
-//
 //                           return GestureDetector(
 //                             onLongPress: () {
 //                               // Show the options dialog (delete and favorite)
 //                               _showOptionsDialog(message.id);
 //                             },
+//                             onTap: message['imageUrl'] != null
+//                                 ? () => showFullScreenImage(message['imageUrl'])
+//                                 : null,
 //                             child: Align(
 //                               alignment: isCurrentUser
 //                                   ? Alignment.centerRight
 //                                   : Alignment.centerLeft,
 //                               child: Container(
 //                                 padding: EdgeInsets.symmetric(
-//                                     vertical: 15, horizontal: 20),
+//                                     vertical: 10, horizontal: 10),
 //                                 margin: EdgeInsets.symmetric(
-//                                     vertical: 8, horizontal: 10),
+//                                     vertical: 6, horizontal: 10),
 //                                 decoration: BoxDecoration(
 //                                   color: Colors.grey[300],
 //                                   borderRadius: BorderRadius.circular(20),
@@ -422,14 +510,27 @@
 //                                     ),
 //                                   ],
 //                                 ),
-//                                 child: Text(
-//                                   message['message'],
-//                                   style: TextStyle(
-//                                     color: isCurrentUser
-//                                         ? Colors.black
-//                                         : Colors.black,
-//                                     fontSize: 16,
-//                                   ),
+//                                 child: Column(
+//                                   crossAxisAlignment: CrossAxisAlignment.start,
+//                                   children: [
+//                                     if (message['message'] != null)
+//                                       Text(
+//                                         message['message'],
+//                                         style: TextStyle(
+//                                           color: isCurrentUser
+//                                               ? Colors.black
+//                                               : Colors.black,
+//                                           fontSize: 17,
+//                                         ),
+//                                       ),
+//                                     if (message['imageUrl'] != null)
+//                                       Image.network(
+//                                         message['imageUrl'],
+//                                         height: 150,
+//                                         width: 150,
+//                                         fit: BoxFit.cover,
+//                                       ),
+//                                   ],
 //                                 ),
 //                               ),
 //                             ),
@@ -441,6 +542,8 @@
 //                 ),
 //               ),
 //             ),
+//
+//
 //             Positioned(
 //               left: 0,
 //               right: 0,
@@ -458,19 +561,21 @@
 //                             controller: _controller,
 //                             decoration: InputDecoration(
 //                               hintText: 'Type your message...',
+//
 //                               prefixIcon: IconButton(
 //                                 icon: const Icon(Icons.mic),
 //                                 onPressed: () {},
 //                               ),
+//
 //                               suffixIcon: Row(
 //                                 mainAxisSize: MainAxisSize.min,
 //                                 children: [
 //                                   IconButton(
-//                                     icon: const Icon(Icons.camera_alt),
-//                                     onPressed: _pickMedia,
+//                                     icon: const Icon(Icons.camera),
+//                                     onPressed: _pickImage,
 //                                   ),
 //                                   IconButton(
-//                                     icon: const Icon(Icons.emoji_emotions),
+//                                     icon: const Icon(Icons.emoji_emotions_outlined),
 //                                     onPressed: _toggleEmojiKeyboard,
 //                                   ),
 //                                 ],
@@ -484,7 +589,7 @@
 //                                 borderRadius:
 //                                 BorderRadius.all(Radius.circular(25)),
 //                                 borderSide:
-//                                 BorderSide(color: Colors.black, width: 2.0),
+//                                 BorderSide(color: Colors.blue, width: 2.0),
 //                               ),
 //                             ),
 //                           ),
@@ -495,6 +600,7 @@
 //                         ),
 //                       ],
 //                     ),
+//
 //                     Offstage(
 //                       offstage: !_emojiShowing,
 //                       child: SizedBox(
@@ -504,7 +610,7 @@
 //                             _controller.text += emoji.emoji;
 //                           },
 //                           config: Config(
-//                             emojiSizeMax: 20 *
+//                             emojiSizeMax: 22 *
 //                                 (foundation.defaultTargetPlatform ==
 //                                     TargetPlatform.iOS
 //                                     ? 1.3

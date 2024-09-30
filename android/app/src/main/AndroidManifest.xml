@@ -2,6 +2,7 @@
 
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
 
+
     <application
         android:label="prj"
         android:name="${applicationName}"

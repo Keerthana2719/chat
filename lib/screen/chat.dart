@@ -1,10 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import 'call.dart';
 import 'cmr.dart';
-import 'ex.dart';
-import 'message.dart';
 
 class Chat extends StatefulWidget {
   final String currentUsername; // The logged-in user's username
@@ -72,7 +68,8 @@ class _ChatState extends State<Chat> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Message(
+        builder: (context) =>
+        Message(
           currentUsername: widget.currentUsername,
           selectedUsername: username,
         ),
@@ -200,4 +197,3 @@ class _ChatState extends State<Chat> {
     );
   }
 }
-
