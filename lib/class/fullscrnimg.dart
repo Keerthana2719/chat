@@ -21,3 +21,23 @@ class FullScreenImageScreen extends StatelessWidget {
   }
 }
 
+class FullScreenvideoScreen extends StatelessWidget {
+  final String videoUrl;
+
+  const FullScreenvideoScreen({Key? key, required this.videoUrl}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: PhotoView(
+        imageProvider: NetworkImage(videoUrl),
+        minScale: PhotoViewComputedScale.contained,
+        maxScale: PhotoViewComputedScale.covered * 2,
+        heroAttributes: PhotoViewHeroAttributes(tag: videoUrl), // Optional: For hero animation
+      ),
+    );
+  }
+}
+
+
