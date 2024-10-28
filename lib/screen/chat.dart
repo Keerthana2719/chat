@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'cmr.dart';
+import '../ex/cmr.dart';
 
 class Chat extends StatefulWidget {
   final String currentUsername; // The logged-in user's username
@@ -58,7 +58,8 @@ class _ChatState extends State<Chat> {
 
     setState(() {
       // Only add users with whom the current user has exchanged messages
-      recentChats = result.docs.map((doc) => doc['receiver'] as String).toSet().toList();
+      recentChats =
+          result.docs.map((doc) => doc['receiver'] as String).toSet().toList();
     });
   }
 
@@ -100,100 +101,106 @@ class _ChatState extends State<Chat> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          leadingWidth: 100,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Chat",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            leadingWidth: 100,
+            leading: Padding(
+              padding: const EdgeInsets.only(left:20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Chat",
+                  style:
+                      const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+                ),
               ),
             ),
+            bottom: const TabBar(
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.deepPurple,
+              labelStyle: TextStyle(fontWeight: FontWeight.bold,fontSize: 18,),
+              tabs: [
+                Tab(text: "Your Chat",),
+                Tab(text: "Story"),
+              ],
+            ),
           ),
-          bottom: const TabBar(
-            indicatorColor: Colors.white,
-            tabs: [
-              Tab(text: "Your Chat"),
-              Tab(text: "Story"),
-            ],
-          ),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              // Search field for usernames
-              TextField(
-                controller: searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search username',
-                  hintStyle: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  prefixIcon: const Icon(Icons.search, color: Colors.black),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 4.0),
-                  filled: true,
-                  fillColor: Colors.black12,
-                ),
-                onChanged: (query) {
-                  searchUsers(query);
-                },
-              ),
-              const SizedBox(height: 20),
-              // Display search results or chat history
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    // Your Chat Tab
-                    isSearching
-                        ? ListView.builder(
-                      itemCount: searchResults.length,
-                      itemBuilder: (context, index) {
-                        var user = searchResults[index];
-                        return ListTile(
-                          title: Text(user['username']),
-                          onTap: () {
-                            _onUserSelected(user['username']);
-                          },
-                        );
-                      },
-                    )
-                        : ListView.builder(
-                      itemCount: recentChats.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(recentChats[index]),
-                          onTap: () {
-                            _onUserSelected(recentChats[index]);
-                          },
-                        );
-                      },
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal:15),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                // Search field for usernames
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search username',
+                    hintStyle: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const Center(child: Text("Story history")),
-                  ],
+                    prefixIcon: const Icon(Icons.search, color: Colors.black),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    filled: true,
+                    fillColor: Colors.black12,
+                  ),
+                  onChanged: (query) {
+                    searchUsers(query);
+                  },
                 ),
-              ),
-            ],
+                 SizedBox(height: 8),
+                // Display search results or chat history
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // Your Chat Tab
+                      isSearching
+                          ? ListView.builder(
+                              itemCount: searchResults.length,
+                              itemBuilder: (context, index) {
+                                var user = searchResults[index];
+                                return ListTile(
+                                  title: Text(user['username']),
+                                  onTap: () {
+                                    _onUserSelected(user['username']);
+                                  },
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              itemCount: recentChats.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: Text(recentChats[index],style: TextStyle(color: Colors.black,fontSize: 17,fontWeight: FontWeight.w600),),
+                                  onTap: () {
+                                    _onUserSelected(recentChats[index]);
+                                  },
+                                );
+                              },
+                            ),
+                       const Center(child: Text("Story history")),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+

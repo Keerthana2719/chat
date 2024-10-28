@@ -2,8 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:prj/screen/profile/Edit_profile.dart';
 import 'package:prj/screen/sign%20up.dart';
-
+import '../ex/bck.dart';
 import 'chat.dart';
 
 class Menu extends StatefulWidget {
@@ -55,51 +56,57 @@ class _MenuState extends State<Menu> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            onPressed: () {
-              if (currentUsername != null) {
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              onPressed: () {
+                if (currentUsername != null) {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => Chat(currentUsername: currentUsername!),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const begin = Offset(0.0, 1.0);
+                        const end = Offset.zero;
+                        const curve = Curves.easeInOut;
+
+                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                        var offsetAnimation = animation.drive(tween);
+
+                        return SlideTransition(position: offsetAnimation, child: child);
+                      },
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Username is not available')),
+                  );
+                }
+              },
+              icon: Icon(Icons.send),
+            ),
+            IconButton(
+              onPressed: () {
                 Navigator.push(
                   context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => Chat(currentUsername: currentUsername!),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      const begin = Offset(0.0, 1.0);
-                      const end = Offset.zero;
-                      const curve = Curves.easeInOut;
-
-                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                      var offsetAnimation = animation.drive(tween);
-
-                      return SlideTransition(position: offsetAnimation, child: child);
-                    },
-                  ),
+                  MaterialPageRoute(builder: (context) =>  UserSignUp()),
                 );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Username is not available')),
-                );
-              }
-            },
-            icon: Icon(Icons.send),
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserSignUp()),
-              );
-            },
-            icon: Icon(Icons.settings_sharp, size: 30),
-          ),
-        ],
-      ),
-      body: Center(
-        child: currentUsername != null
-            ? Text("Hello, $currentUsername!")
-            : Text("Loading..."),
+              },
+              icon: Icon(Icons.settings_sharp, size: 30),
+            ),
+            IconButton(onPressed: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>  Bck(currentUsername: '$currentUsername',)));
+                  //Profile(currentUsername: '',)));
+            }, icon: Icon(Icons.account_circle))
+          ],
+        ),
+        body: Center(
+          child: currentUsername != null
+              ? Text("Hello, $currentUsername!")
+              : Text("Loading..."),
+        ),
       ),
     );
   }

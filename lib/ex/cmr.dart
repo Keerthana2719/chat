@@ -5,11 +5,13 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' as foundation;
+import 'package:intl/intl.dart';
+import 'package:prj/ex/vcall.dart';
 import 'dart:io';
-
 import '../class/fullscrnimg.dart';
 import '../class/fullscrnvdo.dart';
 import '../class/neum.dart';
+import '../class/thumb.dart';
 
 class Message extends StatefulWidget {
   final String currentUsername; // Sender's username (logged-in user)
@@ -28,7 +30,7 @@ class Message extends StatefulWidget {
 class _MessageState extends State<Message> {
   final List<Map<String, dynamic>> menuItems = [
     {'value': 'Clear Chat', 'icon': Icons.clear_all, 'text': 'Clear'},
-    {'value': 'Block', 'icon': Icons.block, 'text': 'Black'},
+    {'value': 'Block', 'icon': Icons.block, 'text': 'Block'},
     {'value': 'Favorite', 'icon': Icons.favorite, 'text': 'Favorite'},
   ];
 
@@ -51,13 +53,13 @@ class _MessageState extends State<Message> {
 
   File? _imageFile; // Holds the selected image
   File? _videoFile; // Holds the selected video
-  final ImagePicker _picker = ImagePicker(); // For picking images/videos
+  final ImagePicker _picker = ImagePicker(); // For picking images/v ideos
   String? _downloadUrl; // To store the uploaded image's URL
   String? _videoDownloadUrl; // To store the uploaded video's URL
   final FirebaseAuth _auth =
       FirebaseAuth.instance; // Firebase Authentication instance
   User? currentUser; // Holds the current logged-in user
-  String? currentUsername; // Stores the current user's username
+  String? currentUsername;
 
   // Function to check if the user is authenticated
   Future<void> _checkAuthStatus() async {
@@ -344,7 +346,7 @@ class _MessageState extends State<Message> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white30,
+          backgroundColor: Colors.white60,
           shadowColor: Colors.black,
           shape: OutlineInputBorder(borderRadius: BorderRadius.circular(40)),
           content: Column(
@@ -413,6 +415,22 @@ class _MessageState extends State<Message> {
     }
   }
 
+  String formatDate(Timestamp timestamp) {
+    DateTime messageDate = timestamp.toDate();
+    DateTime now = DateTime.now();
+
+    Duration difference = now.difference(messageDate);
+
+    if (difference.inHours < 24 && messageDate.day == now.day) {
+      return 'Today'; // Show 'Today' if the message is sent today
+    } else if (difference.inHours < 48 && now.day - messageDate.day == 1) {
+      return 'Yesterday'; // Show 'Yesterday' if the message was sent yesterday
+    } else {
+      return DateFormat('EEEE')
+          .format(messageDate); // Show day of the week (e.g., Monday)
+    }
+  }
+
   void _sendMessage({String? imageUrl, String? videoUrl}) async {
     if (_controller.text.isNotEmpty || imageUrl != null || videoUrl != null) {
       try {
@@ -423,69 +441,77 @@ class _MessageState extends State<Message> {
           'imageUrl': imageUrl,
           'videoUrl': videoUrl,
           'timestamp': FieldValue.serverTimestamp(),
+          "seen": false // New field for seen status
         });
-        _controller.clear();
-        _scrollToBottom();
+        _controller.clear(); // Clear the text field after sending
+        _scrollToBottom(); // Scroll to the bottom of the chat
       } catch (e) {
         print("Error sending message: $e");
       }
     }
   }
 
-  // Function to automatically scroll to the bottom
+// Function to automatically scroll to the bottom
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
   }
 
+  String replyText = '';
+
+  void openKeyboard() {
+    // Your method to open the keyboard goes here
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xFFE7ECEF),
+        backgroundColor: Color.fromRGBO(17, 16, 47, 1),
         body: Stack(
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 13, left: 10, right: 5),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  NeumorphicButton(
-                    icon: Icons.arrow_back_ios,
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  const SizedBox(width: 20),
+                  IconButton(
+                      onPressed: () {},
+                      icon:
+                          Icon(Icons.arrow_back_ios, color: Colors.deepOrange)),
+                  // NeumorphicButton(
+                  //   icon: Icons.arrow_back_ios,
+                  //   onPressed: () {
+                  //     Navigator.pop(context);
+                  //   },
+                  // ),
                   Text(
                     widget.selectedUsername,
                     style: const TextStyle(
-                      color: Colors.black,
+                      color: Colors.cyan,
                       fontWeight: FontWeight.bold,
                       fontSize: 25,
                     ),
                   ),
-                  const Spacer(),
-                  NeumorphicButton(
-                    icon: Icons.call,
-                    onPressed: () {
-                      // Call logic here
-                    },
+                  SizedBox(
+                    width: 20,
                   ),
-                  const SizedBox(width: 10),
-                  NeumorphicButton(
-                    icon: Icons.video_call,
-                    onPressed: () {
-                      // Video call logic here
-                    },
-                  ),
-                  const SizedBox(width: 10),
+                  IconButton(
+                      onPressed: () {},
+                      icon: Icon(Icons.call, color: Colors.deepOrange)),
+                  IconButton(
+                      onPressed: () {},
+                      icon: Icon(
+                        Icons.video_call,
+                        color: Colors.deepOrange,
+                      )),
                   Theme(
                     data: Theme.of(context).copyWith(
                       popupMenuTheme: PopupMenuThemeData(
-                        color: Colors.white70,
+                        color: Color.fromRGBO(17, 16, 47, 1),
                         shape: RoundedRectangleBorder(
-                          side: BorderSide(color: Colors.grey),
+                          side: BorderSide(color: Colors.cyan),
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
@@ -496,8 +522,7 @@ class _MessageState extends State<Message> {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              shadowColor: Colors.black,
-                              backgroundColor: Colors.white70,
+                              backgroundColor: Colors.white60,
                               shape: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(40)),
                               title: Center(
@@ -546,14 +571,24 @@ class _MessageState extends State<Message> {
                         return PopupMenuItem<String>(
                           value: item['value'],
                           child: ListTile(
-                            leading: Icon(item['icon'], color: Colors.black),
-                            title: Text(item['text']),
+                            leading: Icon(
+                              item['icon'],
+                              color: Colors.deepOrangeAccent,
+                              size: 25,
+                            ),
+                            title: Text(
+                              item['text'],
+                              style: TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18),
+                            ),
                           ),
                         );
                       }).toList(),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.more_vert,
-                        color: Colors.black,
+                        color: Colors.deepOrangeAccent,
                       ),
                     ),
                   ),
@@ -561,160 +596,236 @@ class _MessageState extends State<Message> {
               ),
             ),
             Align(
-              alignment: Alignment.bottomCenter,
+              alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.only(left: 10, right: 10),
+                padding: const EdgeInsets.only(left: 10, right: 10, top: 85),
                 child: Container(
-                    height: 580,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(25),
-                        topRight: Radius.circular(25),
+                  height: 535,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(25)),
+                    color: Color.fromRGBO(25, 23, 61, 1),
+                    boxShadow: const [
+                      BoxShadow(
+                        offset: Offset(-5, -5),
+                        color: Color.fromRGBO(51, 48, 108, 1),
+                        blurRadius: 4.5,
                       ),
-                      color: const Color(0xFFE7ECEF),
-                      boxShadow: const [
-                        BoxShadow(
-                          offset: Offset(-8, -8),
-                          color: Colors.white,
-                          blurRadius: 4.5,
-                        ),
-                        BoxShadow(
-                          offset: Offset(5, 5),
-                          color: Colors.black38,
-                          blurRadius: 1.5,
-                        ),
-                      ],
-                    ),
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: _firestore
-                          .collection('messages')
-                          .orderBy('timestamp', descending: false)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
+                      BoxShadow(
+                        offset: Offset(9, 9),
+                        color: Colors.black38,
+                        blurRadius: 1.5,
+                      ),
+                    ],
+                  ),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _firestore
+                        .collection('messages')
+                        .orderBy('timestamp', descending: false)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return const Center(child: Text('No messages yet'));
-                        }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(child: Text('No messages yet'));
+                      }
 
-                        final messages = snapshot.data!.docs.where((message) {
-                          // Access data with null checks to avoid missing fields
+                      final messages = snapshot.data!.docs.where((message) {
+                        final messageData =
+                            message.data() as Map<String, dynamic>?;
+
+                        if (messageData == null) return false;
+
+                        final sender = messageData['sender'];
+                        final receiver = messageData['receiver'];
+
+                        return (sender != null && receiver != null) &&
+                            ((sender == widget.currentUsername &&
+                                    receiver == widget.selectedUsername) ||
+                                (sender == widget.selectedUsername &&
+                                    receiver == widget.currentUsername));
+                      }).toList();
+
+                      if (messages.isEmpty) {
+                        return const Center(
+                            child: Text('No relevant messages'));
+                      }
+
+                      return ListView.builder(
+                        controller: _scrollController,
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
                           final messageData =
-                              message.data() as Map<String, dynamic>;
-                          final sender = messageData['sender'];
-                          final receiver = messageData['receiver'];
+                              messages[index].data() as Map<String, dynamic>;
+                          final isCurrentUser =
+                              messageData['sender'] == widget.currentUsername;
+                          final timestamp =
+                              messageData['timestamp'] as Timestamp?;
+                          final isSeen = messageData['seen'] as bool? ??
+                              false; // Check if the message is seen
 
-                          // Ensure that sender and receiver are not null before filtering
-                          if (sender == null || receiver == null) return false;
+                          if (timestamp == null) {
+                            return SizedBox();
+                          }
 
-                          return (sender == widget.currentUsername &&
-                                  receiver == widget.selectedUsername) ||
-                              (sender == widget.selectedUsername &&
-                                  receiver == widget.currentUsername);
-                        }).toList();
+                          // Show date if it's a new day
+                          bool showDate = true;
+                          if (index > 0) {
+                            final previousMessageData = messages[index - 1]
+                                .data() as Map<String, dynamic>;
+                            final previousTimestamp =
+                                previousMessageData['timestamp'] as Timestamp?;
 
-                        return ListView.builder(
-                          controller: _scrollController,
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            final messageData =
-                                messages[index].data() as Map<String, dynamic>;
-                            final isCurrentUser =
-                                messageData['sender'] == widget.currentUsername;
+                            if (previousTimestamp != null) {
+                              showDate = timestamp.toDate().day !=
+                                  previousTimestamp.toDate().day;
+                            }
+                          }
 
-                            return GestureDetector(
-                              onLongPress: () {
-                                _showOptionsDialog(messages[index]
-                                    .id); // Show options dialog for the message
-                              },
-                              onTap: () {
-                                if (messageData['imageUrl'] != null) {
-                                  // Show full-screen image if imageUrl is present
-                                  showFullScreenImage(messageData['imageUrl']);
-                                } else if (messageData['videoUrl'] != null) {
-                                  // Show full-screen video player if videoUrl is present
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          FullScreenVideoScreen(
-                                        videoUrl: messageData[
-                                            'videoUrl'], // Pass video URL to the VideoPlayerScreen
+                          // Update seen status in Firestore if the message has not been seen and belongs to currentUsername
+                          if (!isSeen && !isCurrentUser) {
+                            messages[index].reference.update({'seen': true});
+                          }
+
+                          return Column(
+                            crossAxisAlignment: isCurrentUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              if (showDate)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: Center(
+                                    child: Text(
+                                      formatDate(timestamp),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
                                       ),
                                     ),
-                                  );
-                                }
-                              },
-                              child: Align(
-                                alignment: isCurrentUser
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 10),
-                                  margin: EdgeInsets.symmetric(
-                                      vertical: 6, horizontal: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white,
-                                        offset: Offset(-4, -4),
-                                        blurRadius: 10,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.grey[500]!,
-                                        offset: Offset(3, 3),
-                                        blurRadius: 5,
-                                      ),
-                                    ],
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (messageData['message'] != null)
-                                        Text(
-                                          messageData['message'],
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 17,
-                                          ),
-                                        ),
-                                      if (messageData['imageUrl'] != null)
-                                        Image.network(
-                                          messageData['imageUrl'],
-                                          height: 120,
-                                          width: 120,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      if (messageData['videoUrl'] != null)
-                                        Image.network(
-                                          messageData['videoUrl'],
-                                          height: 120,
-                                          width: 120,
-                                          fit: BoxFit.cover,
-                                        ),
-                                    ],
+                                ),
+                              // Timestamp displayed above the container
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 5, horizontal: 15),
+                                child: Text(
+                                  DateFormat('hh:mm a')
+                                      .format(timestamp.toDate()),
+                                  style: TextStyle(
+                                    color: isCurrentUser && isSeen
+                                        ? Colors
+                                            .green // Change to green if the message is seen
+                                        : Colors.blue, // Else, show blue
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      },
-                    )),
+                              Dismissible(
+                                key: UniqueKey(),
+                                background: Container(
+                                  color: Colors.green, // Color when swiped
+                                  alignment: Alignment.centerLeft,
+                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                  child: Icon(Icons.reply, color: Colors.white),
+                                ),
+                                confirmDismiss: (direction) async {
+                                  replyText = messageData[
+                                      'message']; // Set the reply text
+                                  await Future.delayed(Duration(
+                                      milliseconds: 500)); // Optional delay
+                                  openKeyboard(); // Open the keyboard for the user to reply
+                                  return false; // Prevent the message from being dismissed
+                                },
+                                child: GestureDetector(
+                                  onLongPress: () {
+                                    _showOptionsDialog(messages[index].id);
+                                  },
+                                  onTap: () {
+                                    final imageUrl = messageData['imageUrl'];
+                                    final videoUrl = messageData['videoUrl'];
+
+                                    if (imageUrl != null) {
+                                      showFullScreenImage(imageUrl);
+                                    } else if (videoUrl != null) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              FullScreenVideoScreen(
+                                            videoUrl: videoUrl,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Align(
+                                    alignment: isCurrentUser
+                                        ? Alignment.centerRight
+                                        : Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8, horizontal: 10),
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 3, horizontal: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.pinkAccent,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          const BoxShadow(
+                                            color: Colors.white60,
+                                            offset: Offset(-1, -1),
+                                            blurRadius: 1,
+                                          ),
+                                          BoxShadow(
+                                            color: Colors.black,
+                                            offset: const Offset(5, 5),
+                                            blurRadius: 3,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          if (messageData['message'] != null)
+                                            Text(
+                                              messageData['message'],
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 17,
+                                              ),
+                                            ),
+                                          if (messageData['imageUrl'] != null)
+                                            Image.network(
+                                              messageData['imageUrl'],
+                                              height: 120,
+                                              width: 120,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          if (messageData['videoUrl'] != null)
+                                            VideoMessageWidget(
+                                                videoUrl:
+                                                    messageData['videoUrl']),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 2,
+            Align(
+              alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.only(left: 15, right: 15),
                 child: Column(
@@ -727,7 +838,7 @@ class _MessageState extends State<Message> {
                             focusNode: _textFieldFocusNode,
                             controller: _controller,
                             decoration: InputDecoration(
-                              hintText: 'Type your message...',
+                              labelText: 'Type your message...',
                               prefixIcon: IconButton(
                                 icon: const Icon(Icons.mic),
                                 onPressed: () {},

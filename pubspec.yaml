@@ -44,7 +44,12 @@ dependencies:
   shared_preferences: ^2.3.2
   photo_view: ^0.15.0
   video_player: ^2.9.2
-
+  get_thumbnail_video: ^0.6.1
+  agora_rtc_engine: ^6.3.2
+  permission_handler: ^11.3.1
+  intl: ^0.19.0
+  swipe_to: ^1.0.6
+  get: ^4.6.6
 
 
 dev_dependencies:
@@ -70,8 +75,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+#  assets:
+  #   - assets/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
